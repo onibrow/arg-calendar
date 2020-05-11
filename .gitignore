@@ -1,0 +1,53 @@
+#/bin/bash
+credentials.json
+token.pickle
+calendars.csv
+
+*.__pycache__/
+__pycache__/
+*.ok_messages
+*.ok_refresh
+*.swp
+.*.swp
+*.swo
+.*.swo
+*.ipynb_checkpoints
+
+#########
+# EAGLE #
+#########
+# lbr temp files
+*.l#*
+scono.l#*
+*.job
+
+# backup sch/brd files
+**/*.[b,s,l,d]#*
+
+##########
+# Gerbers #
+##########
+
+#ignore gerber files because you can generate them with the cam jobs.
+#therefore, no need to version control them
+
+*.pro
+*.bor
+*.cmp
+*.crc
+*.crs
+*.dri
+*.drd
+*.gpi
+*.ly15
+*.ly2
+*.plc
+*.pls
+*.sol
+*.stc
+*.sts
+*.fab
+*.oln
+*.sco
+placement.*
+toollist.*
