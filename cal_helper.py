@@ -41,10 +41,7 @@ def list_calendars(creds, service):
         print("{}: {}".format(x.get("summary"), x.get("id")))
 
 def get_datetime_obj(day, month, year):
-    blah = datetime.datetime(year, month, day).isoformat() + 'Z'
-    now = datetime.datetime.utcnow().isoformat() + 'Z'
-    #print("Now: {} Blah: {}".format(now, blah))
-    return blah
+    return datetime.datetime(year, month, day).isoformat() + 'Z'
 
 def extract_day(query):
     match = re.search('^(\d{4})-(\d{2})-(\d{2})T.*$', query)
@@ -66,7 +63,7 @@ def get_event_type(summary):
 
 def list_all_events(start_date, creds, service, cal='primary'):
     events_result = service.events().list(calendarId=cal, timeMin=start_date,
-                                        maxResults=10, singleEvents=True,
+                                        maxResults=None, singleEvents=True,
                                         orderBy='startTime', timeZone='US/Pacific').execute()
     events = events_result.get('items', [])
 
@@ -76,12 +73,15 @@ def list_all_events(start_date, creds, service, cal='primary'):
     for event in events:
         event_type = get_event_type(event['summary'])
         if (event_type is not None):
-            day = extract_day(event['start'].get('dateTime', event['start'].get('date')))
-            start_time = extract_time(event['start'].get('dateTime', event['start'].get('date')))
-            end_time   = extract_time(event['end'].get('dateTime', event['end'].get('date')))
-            dur   = end_time - start_time
-            event_name = re.search('^.*\[.*\]\s*?(\S.*)$', event['summary']).group(1)
-            events_info_list += [Event(event_name, event_type, day, dur)]
+            try:
+                day = extract_day(event['start'].get('dateTime', event['start'].get('date')))
+                start_time = extract_time(event['start'].get('dateTime', event['start'].get('date')))
+                end_time   = extract_time(event['end'].get('dateTime', event['end'].get('date')))
+                dur   = end_time - start_time
+                event_name = re.search('^.*\[.*\]\s*?(\S.*)$', event['summary']).group(1)
+                events_info_list += [Event(event_name, event_type, day, dur)]
+            except AttributeError:
+                print("AttributeError: {}".format(event['summary']))
     return events_info_list
 
 class Event(object):
@@ -94,13 +94,20 @@ class Event(object):
     def __str__(self):
         return "{} type [{}] on {} for {}".format(self.name, self.event_type, self.date, self.dura)
 
-def main():
+def load_calendars():
+    cal_dict = {}
+    with open('calendars.csv', 'r') as fp:
+        line = fp.readline().split(',')
+        cal_dict[line[0]] = line[1].strip()
+    return cal_dict
+        
+def pseudo_main():
     (creds, service) = get_creds_service()
+    cal_dict = load_calendars()
     start_date = get_datetime_obj(26, 8, 2019)
-    events = list_ten_events(start_date, creds, service, cal=research_cal)
+    events = list_all_events(start_date, creds, service, cal=cal_dict['research_cal'])
     for x in events:
         print(x)
-    #get_datetime_obj(1,2,2020)
 
 if __name__ == '__main__':
-    main()
+    pseudo_main()
