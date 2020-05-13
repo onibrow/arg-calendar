@@ -6,6 +6,7 @@ import re
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
+from timezones import Pacific
 
 # If modifying these scopes, delete the file token.pickle.
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
@@ -43,6 +44,10 @@ def list_calendars(creds, service):
 def get_datetime_obj(day, month, year):
     return datetime.datetime(year, month, day).isoformat() + 'Z'
 
+def get_datetime_now():
+    return datetime.datetime.combine(datetime.datetime.now(tz=Pacific).date(), 
+                                     datetime.datetime.min.time()).isoformat() + 'Z'
+
 def extract_day(query):
     match = re.search('^(\d{4})-(\d{2})-(\d{2})T.*$', query)
     if (match is None):
@@ -55,13 +60,20 @@ def extract_time(query):
         print("No time found")
     return datetime.timedelta(hours=int(match.group(1)), minutes=int(match.group(2)))
 
+def extract_datetime(query):
+    match = re.search('^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):\d{2}-.*$', query)
+    if (match is None):
+        print("No datetime found")
+    return datetime.datetime(int(match.group(1)), int(match.group(2)), int(match.group(3)),
+                             hour=int(match.group(4)), minute=int(match.group(5)))
+
 def get_event_type(summary):
     match = re.search('^.*\[(.*?)\].*$', summary)
     if (match is None):
         return None
     return match.group(1)
 
-def list_all_events(start_date, creds, service, cal='primary'):
+def list_all_research_events(start_date, creds, service, cal='primary'):
     events_result = service.events().list(calendarId=cal, timeMin=start_date,
                                         maxResults=None, singleEvents=True,
                                         orderBy='startTime', timeZone='US/Pacific').execute()
@@ -84,6 +96,28 @@ def list_all_events(start_date, creds, service, cal='primary'):
                 print("AttributeError: {}".format(event['summary']))
     return events_info_list
 
+def list_all_group_meetings(start_date, creds, service, cal='primary'):
+    events_result = service.events().list(calendarId=cal, timeMin=start_date,
+                                        maxResults=None, singleEvents=True,
+                                        orderBy='startTime', timeZone='US/Pacific').execute()
+    events = events_result.get('items', [])
+
+    events_info_list = []
+    if not events:
+        print('No upcoming events found.')
+    for event in events:
+        match = re.search('^.*?Group Meeting.*?$', event['summary'])
+        if (match is not None):
+            try:
+                day = extract_datetime(event['start'].get('dateTime', event['start'].get('date')))
+                start_time = extract_time(event['start'].get('dateTime', event['start'].get('date')))
+                end_time   = extract_time(event['end'].get('dateTime', event['end'].get('date')))
+                dur   = end_time - start_time
+                events_info_list += [Event(event['summary'], 'Group Meeting', day, dur)]
+            except AttributeError:
+                print("AttributeError: {}".format(event['summary']))
+    return events_info_list
+
 class Event(object):
     def __init__(self, name, event_type, date, duration):
         self.name = name
@@ -98,7 +132,9 @@ def load_calendars():
     cal_dict = {}
     with open('calendars.csv', 'r') as fp:
         line = fp.readline().split(',')
-        cal_dict[line[0]] = line[1].strip()
+        while (line[0] != ''):
+            cal_dict[line[0]] = line[1].strip()
+            line = fp.readline().split(',')
     return cal_dict
         
 def pseudo_main():
