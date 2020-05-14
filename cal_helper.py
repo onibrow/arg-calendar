@@ -127,6 +127,15 @@ class Event(object):
 
     def __str__(self):
         return "{} type [{}] on {} for {}".format(self.name, self.event_type, self.date, self.dura)
+    
+def pretty_print_group_meeting(events):
+    width = len(max(events, key=lambda event: len(event.name)).name)
+    for event in events:
+        print("+{}+\n| {} |\n| {} |\n| {} |\n+{}+".format("-" * (width+2), 
+                                                            event.name + " " * (width - len(event.name)), 
+                                                            str(event.date.date()) + " " * (width - len(str(event.date.date()))),
+                                                            str(event.date.time()) + " " * (width - len(str(event.date.time()))),
+                                                            "-" * (width+2)))
 
 def load_calendars():
     cal_dict = {}
