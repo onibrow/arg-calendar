@@ -11,7 +11,7 @@ from google.auth.transport.requests import Request
 from timezones import Pacific
 import copy
 
-calendar_name = 'Research Test'
+calendar_name = 'Arias Group Meeting'
 
 class GM_Event(Event):
     def __init__(self,  index, datetime, duration, names):
