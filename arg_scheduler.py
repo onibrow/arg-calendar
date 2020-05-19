@@ -284,13 +284,15 @@ def main():
     actions_to_functions = [group_meetings.delay_event,
                group_meetings.split_event,
                group_meetings.remove_person,
+               group_meetings.schedule_meetings,
                group_meetings.trash_changes,
                group_meetings.preview_changes,
                group_meetings.publish_changes]
-    actions = ['Delay Event', 'Split Event', 'Remove Presenter','Discard Changes', 'Preview Changes', 'Publish Changes']
+    actions = ['Delay Event', 'Split Event', 'Remove Presenter', 'Schedule Meetings', 'Discard Changes', 'Preview Changes', 'Publish Changes']
     desc    = ['Push back all events from a chosen date',
                'Split a meeting from two people to one. Pushes back all names',
                'Remove one presentor and pull people forwards',
+               'Schedule future group meetings',
                'Discard changes and revert to posted calendar',
                'Preview edits that have been made',
                'Publish changes to Google Calendar']
