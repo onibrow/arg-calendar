@@ -19,7 +19,7 @@ def rlinput(prompt, prefill=''):
         return input(prompt)
     finally:
         readline.set_startup_hook()
-        
+
 def yes_no(prompt):
     user_input = None
     while (user_input is None):
@@ -40,7 +40,7 @@ def int_prompt(prompt, lower_bound=0, upper_bound=10000):
         except ValueError:
             print("Invalid input. ({},{}) inclusive".format(lower_bound, upper_bound))
     return user_input
-        
+
 
 def get_creds_service():
     """Shows basic usage of the Google Calendar API.
@@ -71,12 +71,12 @@ def list_calendars(creds, service):
     list_cals = service.calendarList().list().execute()
     for x in list_cals.get('items'):
         print("{}: {}".format(x.get("summary"), x.get("id")))
-    
+
 def load_calendars():
     cal_dict = {}
     with open('calendars.csv', 'r') as fp:
         line = fp.readline().split(',')
-        while (line[0] != ''):
+        while (line[0].strip() != ''):
             cal_dict[line[0]] = line[1].strip()
             line = fp.readline().split(',')
     return cal_dict
@@ -85,11 +85,11 @@ def get_datetime_obj(day, month, year):
     return datetime.datetime(year, month, day).isoformat() + 'Z'
 
 def get_datetime_now():
-    return datetime.datetime.combine(datetime.datetime.now(tz=Pacific).date(), 
+    return datetime.datetime.combine(datetime.datetime.now(tz=Pacific).date(),
                                      datetime.datetime.min.time()).isoformat() + 'Z'
 
 def get_datetime_2_week_ago():
-    return datetime.datetime.combine((datetime.datetime.now(tz=Pacific).date()  - datetime.timedelta(days=14)), 
+    return datetime.datetime.combine((datetime.datetime.now(tz=Pacific).date()  - datetime.timedelta(days=14)),
                                      datetime.datetime.min.time()).isoformat() + 'Z'
 
 def datetime_to_api_format(dt, dur):
