@@ -43,9 +43,6 @@ def int_prompt(prompt, lower_bound=0, upper_bound=10000):
 
 
 def get_creds_service():
-    """Shows basic usage of the Google Calendar API.
-    Prints the start and name of the next 10 events on the user's calendar.
-    """
     creds = None
     # The file token.pickle stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first
@@ -64,22 +61,25 @@ def get_creds_service():
         # Save the credentials for the next run
         with open('token.pickle', 'wb') as token:
             pickle.dump(creds, token)
+
     service = build('calendar', 'v3', credentials=creds)
-    return (creds, service)
+    if not os.path.exists('calendar_url.txt'):
+        api_cal = select_calendar(service)
+        with open('calendar_url.txt', 'w') as f:
+            f.write(api_cal)
+    else:
+        with open('calendar_url.txt', 'r') as f:
+            api_cal = f.readline().strip()
+    return (creds, service, api_cal)
 
-def list_calendars(creds, service):
+def select_calendar(service):
     list_cals = service.calendarList().list().execute()
-    for x in list_cals.get('items'):
-        print("{}: {}".format(x.get("summary"), x.get("id")))
-
-def load_calendars():
-    cal_dict = {}
-    with open('calendars.csv', 'r') as fp:
-        line = fp.readline().split(',')
-        while (line[0].strip() != ''):
-            cal_dict[line[0]] = line[1].strip()
-            line = fp.readline().split(',')
-    return cal_dict
+    i = 0
+    cals = list_cals.get('items')
+    for x in cals:
+        print("[{}] {}".format(i, x.get("summary")))
+        i += 1
+    return cals[int_prompt("Select the group meeting calendar: ", lower_bound=0, upper_bound=len(cals))].get("id")
 
 def get_datetime_obj(day, month, year):
     return datetime.datetime(year, month, day).isoformat() + 'Z'

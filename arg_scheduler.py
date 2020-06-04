@@ -11,8 +11,6 @@ from google.auth.transport.requests import Request
 from timezones import Pacific
 import copy
 
-calendar_name = 'Arias Group Meeting'
-
 class GM_Event(Event):
     def __init__(self,  index, datetime, duration, names):
         self.index = index
@@ -45,8 +43,7 @@ class GM_Event(Event):
 
 class Group_Meetings(object):
     def __init__(self):
-        (self.creds, self.service) = get_creds_service()
-        self.api_calendar = load_calendars()[calendar_name]
+        (self.creds, self.service, self.api_calendar) = get_creds_service()
         (self.events, self.api_events) = self.list_all_group_meetings()
         self.og_events = copy.deepcopy(self.events)
         self.all_names = self.enumerate_all_names()
@@ -89,6 +86,12 @@ class Group_Meetings(object):
     def pretty_print(self, events_list=True):
         if (events_list is True):
             events_list = self.events
+        try:
+            if (len(events_list) == 0):
+                print("No events found")
+        except TypeError:
+            print("No events found")
+
         longest_event = max(events_list, key=lambda event: (len(event.title) + len(str(event.index)) + 3))
         width = len(longest_event.title) + len(str(longest_event.index)) + 3
         to_print = ""
@@ -237,6 +240,19 @@ class Group_Meetings(object):
 
     def schedule_meetings(self):
         first_date = None
+        people_list = []
+        try:
+            with open("people.txt", 'r') as fp:
+                line = fp.readline().strip()
+                while (line != ''):
+                    people_list += [line]
+                    line = fp.readline().strip()
+        except FileNotFoundError:
+            print("No people found! Populate people.txt")
+            raise KeyboardInterrupt
+        if (len(people_list) == 0):
+            print("No people found! Populate people.txt")
+            raise KeyboardInterrupt
         while(first_date is None):
             mont = int_prompt("Month (0:12): ", lower_bound=0, upper_bound=12)
             day  = int_prompt("Date (0:31): ", lower_bound=0, upper_bound=31)
@@ -249,12 +265,6 @@ class Group_Meetings(object):
                 first_date = None
                 print("Invalid Date/Time Format.")
         dura = datetime.timedelta(minutes=int_prompt("Duration (minutes): ", lower_bound=0))
-        people_list = []
-        with open("people.txt", 'r') as fp:
-            line = fp.readline()
-            while (line != ''):
-                people_list += [line.strip()]
-                line = fp.readline()
         if (len(people_list) % 2 == 1):
             people_list += ['None']
         new_event_list = []
@@ -298,10 +308,10 @@ def main():
                'Publish changes to Google Calendar']
     while (True):
         actions_to_functions[load_actions(actions, desc)]()
-        time.sleep(2)
+        time.sleep(1)
 
 if __name__ == '__main__':
     try:
         main()
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, EOFError):
         print("\n\nExitting...")
